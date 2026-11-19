@@ -187,6 +187,7 @@ from flask import Flask
 from .config import config_by_name
 from .extensions import db, migrate, jwt
 
+
 def create_app(config_name="development"):
     app = Flask(__name__)
     app.config.from_object(config_by_name[config_name])
@@ -196,9 +197,11 @@ def create_app(config_name="development"):
     jwt.init_app(app)
 
     from .api.v1 import register_blueprints
+
     register_blueprints(app)
 
     from .common.errors import register_error_handlers
+
     register_error_handlers(app)
     return app
 ```

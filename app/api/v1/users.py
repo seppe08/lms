@@ -1,53 +1,141 @@
-from fastapi import APIRouter, HTTPException, Query, status
-from sqlalchemy import select
+from typing import Annotated
 
-from app.api.deps import DbSession, UserDep
-from app.core.security import hash_password
-from app.models.user import User
-from app.schemas.user import UserCreate, UserRead, UserUpdate
+from fastapi import APIRouter, Query, status
+
+from app.api.deps import AdminUser, CurrentUser, DbSession, PaginationDep
+from app.common.pagination import PaginatedResponse
+from app.models.enums import UserRole
+from app.schemas.user import AdminUserUpdate, UserRead, UserUpdate
+from app.services import user_service
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-async def create_user(payload: UserCreate, db: DbSession):
-    exists = await db.scalar(select(User).where(User.email == payload.email))
-    if exists:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
-    user = User(
-        email=payload.email,
-        full_name=payload.full_name,
-        hashed_password=hash_password(payload.password),
-    )
-    db.add(user)
-    await db.commit()
-    await db.refresh(user)
-    return user
+@router.get(
+    "/me",
+    response_model=UserRead,
+    summary="Get current user profile",
+    description="Returns the authenticated user's profile.",
+)
+async def read_current_user(current_user: CurrentUser) -> UserRead:
+    return UserRead.model_validate(current_user)
 
 
-@router.get("", response_model=list[UserRead])
+@router.patch(
+    "/me",
+    response_model=UserRead,
+    summary="Update current user profile",
+    description="Allows the authenticated user to update their own editable profile fields.",
+)
+async def update_current_user(
+    payload: UserUpdate,
+    current_user: CurrentUser,
+    db: DbSession,
+) -> UserRead:
+    user = await user_service.update_own_profile(db, current_user, payload)
+    return UserRead.model_validate(user)
+
+
+@router.get(
+    "",
+    response_model=PaginatedResponse[UserRead],
+    summary="List users (Admin)",
+    description="Returns a paginated, filterable list of all users. Restricted to administrators.",
+)
 async def list_users(
-    db: DbSession, skip: int = Query(0, ge=0), limit: int = Query(10, ge=1, le=100)
-):
-    result = await db.execute(select(User).offset(skip).limit(limit))
-    return result.scalars().all()
+    db: DbSession,
+    admin: AdminUser,
+    pagination: PaginationDep,
+    role: Annotated[UserRole | None, Query(description="Filter by user role")] = None,
+    is_active: Annotated[bool | None, Query(description="Filter by active status")] = None,
+    search: Annotated[str | None, Query(max_length=100, description="Search email or name")] = None,
+) -> PaginatedResponse[UserRead]:
+    users, total = await user_service.list_users(
+        db,
+        actor=admin,
+        page=pagination.page,
+        per_page=pagination.per_page,
+        role=role,
+        is_active=is_active,
+        search=search,
+    )
+    return PaginatedResponse.create(
+        items=[UserRead.model_validate(u) for u in users],
+        total=total,
+        page=pagination.page,
+        per_page=pagination.per_page,
+    )
 
 
-@router.get("/{user_id}", response_model=UserRead)
-async def get_user(user: UserDep):
-    return user
+@router.get(
+    "/{user_id}",
+    response_model=UserRead,
+    summary="Get user by ID (Admin)",
+    description="Returns a single user's details. Restricted to administrators.",
+)
+async def get_user(user_id: int, db: DbSession, _admin: AdminUser) -> UserRead:
+    user = await user_service.get_user_by_id(db, user_id)
+    return UserRead.model_validate(user)
 
 
-@router.patch("/{user_id}", response_model=UserRead)
-async def update_user(payload: UserUpdate, user: UserDep, db: DbSession):
-    for field, value in payload.model_dump(exclude_unset=True).items():
-        setattr(user, field, value)
-    await db.commit()
-    await db.refresh(user)
-    return user
+@router.patch(
+    "/{user_id}",
+    response_model=UserRead,
+    summary="Update user (Admin)",
+    description="Allows an administrator to update a user's name, role, or active status.",
+)
+async def admin_update_user(
+    user_id: int,
+    payload: AdminUserUpdate,
+    db: DbSession,
+    admin: AdminUser,
+) -> UserRead:
+    user = await user_service.admin_update_user(
+        db,
+        target_user_id=user_id,
+        actor=admin,
+        payload=payload,
+    )
+    return UserRead.model_validate(user)
 
 
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_user(user: UserDep, db: DbSession):
-    await db.delete(user)
-    await db.commit()
+@router.post(
+    "/{user_id}/deactivate",
+    response_model=UserRead,
+    summary="Deactivate user (Admin)",
+    description="Deactivates a user account so they can no longer authenticate.",
+)
+async def deactivate_user(user_id: int, db: DbSession, admin: AdminUser) -> UserRead:
+    user = await user_service.set_user_active(
+        db,
+        target_user_id=user_id,
+        actor=admin,
+        is_active=False,
+    )
+    return UserRead.model_validate(user)
+
+
+@router.post(
+    "/{user_id}/activate",
+    response_model=UserRead,
+    summary="Activate user (Admin)",
+    description="Re-activates a previously deactivated user account.",
+)
+async def activate_user(user_id: int, db: DbSession, admin: AdminUser) -> UserRead:
+    user = await user_service.set_user_active(
+        db,
+        target_user_id=user_id,
+        actor=admin,
+        is_active=True,
+    )
+    return UserRead.model_validate(user)
+
+
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete user (Admin)",
+    description="Permanently deletes a user account and cascades owned records.",
+)
+async def delete_user(user_id: int, db: DbSession, admin: AdminUser) -> None:
+    await user_service.delete_user(db, target_user_id=user_id, actor=admin)

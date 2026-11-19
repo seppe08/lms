@@ -1,0 +1,9 @@
+{
+  "name": "lms-api",
+  "private": true,
+  "scripts": {
+    "dev": "bash -c 'if [ ! -x .venv/bin/python ]; then export PATH=\"$HOME/.local/bin:$PATH\"; if ! command -v uv >/dev/null 2>&1; then curl -LsSf https://astral.sh/uv/install.sh | sh; fi; uv sync --python 3.12; fi; exec .venv/bin/python scripts/run_dev.py'",
+    "build": ".venv/bin/ruff check . && .venv/bin/python -c \"import app.main\"",
+    "lint": ".venv/bin/ruff check . && .venv/bin/ruff format --check ."
+  }
+}
