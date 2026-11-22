@@ -11,7 +11,7 @@ See https://docs.sentry.io/platforms/python/agent-tracing/#tracking-conversation
 import re
 from typing import TYPE_CHECKING
 
-import sentry_sdk
+import sentry_sdk.ai
 
 if TYPE_CHECKING:
     from app.models.user import User

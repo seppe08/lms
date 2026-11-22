@@ -1,3 +1,5 @@
+import subprocess
+import sys
 from types import SimpleNamespace
 
 import pytest
@@ -106,6 +108,21 @@ def test_ai_content_capture_can_be_disabled(monkeypatch: pytest.MonkeyPatch) -> 
 )
 def test_normalize_conversation_id(value: str | None, expected: str | None) -> None:
     assert normalize_conversation_id(value) == expected
+
+
+def test_agent_module_imports_sentry_ai_submodule() -> None:
+    # sentry_sdk.ai is a submodule and is not an attribute of sentry_sdk until
+    # imported. Verify a clean interpreter gets it from our module.
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys, app.core.sentry_agent; assert 'sentry_sdk.ai' in sys.modules",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 async def test_conversation_header_is_bound_to_request_scope(stub_sentry_init: None) -> None:
