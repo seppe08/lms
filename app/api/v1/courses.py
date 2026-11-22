@@ -140,9 +140,7 @@ async def get_course(
     db: DbSession,
     actor: OptionalCurrentUser,
 ) -> CourseDetailRead:
-    course = await course_service.get_course_detail(
-        db, course_id=course_id, actor=actor
-    )
+    course = await course_service.get_course_detail(db, course_id=course_id, actor=actor)
     return CourseDetailRead.model_validate(course)
 
 
@@ -302,9 +300,7 @@ async def list_course_modules(
     db: DbSession,
     actor: OptionalCurrentUser,
 ) -> list[ModuleOutlineRead]:
-    modules = await course_service.list_course_modules(
-        db, course_id=course_id, actor=actor
-    )
+    modules = await course_service.list_course_modules(db, course_id=course_id, actor=actor)
     return [ModuleOutlineRead.model_validate(m) for m in modules]
 
 
@@ -455,9 +451,7 @@ async def get_lesson(
     db: DbSession,
     actor: CurrentUser,
 ) -> LessonRead:
-    lesson = await course_service.get_lesson_content(
-        db, lesson_id=lesson_id, actor=actor
-    )
+    lesson = await course_service.get_lesson_content(db, lesson_id=lesson_id, actor=actor)
     return LessonRead.model_validate(lesson)
 
 

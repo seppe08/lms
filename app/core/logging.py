@@ -4,9 +4,7 @@ import logging
 import sys
 from datetime import UTC, datetime
 
-request_id_ctx_var: contextvars.ContextVar[str] = contextvars.ContextVar(
-    "request_id", default="-"
-)
+request_id_ctx_var: contextvars.ContextVar[str] = contextvars.ContextVar("request_id", default="-")
 
 
 class JsonFormatter(logging.Formatter):

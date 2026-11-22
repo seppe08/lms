@@ -58,9 +58,7 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_courses")),
     )
     op.create_index(op.f("ix_courses_slug"), "courses", ["slug"], unique=True)
-    op.create_index(
-        op.f("ix_courses_instructor_id"), "courses", ["instructor_id"], unique=False
-    )
+    op.create_index(op.f("ix_courses_instructor_id"), "courses", ["instructor_id"], unique=False)
     op.create_index(op.f("ix_courses_status"), "courses", ["status"], unique=False)
 
     op.create_table(
@@ -90,9 +88,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_modules")),
     )
-    op.create_index(
-        op.f("ix_modules_course_id"), "modules", ["course_id"], unique=False
-    )
+    op.create_index(op.f("ix_modules_course_id"), "modules", ["course_id"], unique=False)
     op.create_index(
         "ix_modules_course_id_position",
         "modules",
@@ -139,9 +135,7 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_lessons")),
     )
-    op.create_index(
-        op.f("ix_lessons_module_id"), "lessons", ["module_id"], unique=False
-    )
+    op.create_index(op.f("ix_lessons_module_id"), "lessons", ["module_id"], unique=False)
     op.create_index(
         "ix_lessons_module_id_position",
         "lessons",

@@ -60,9 +60,7 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
             environment=cfg.ENVIRONMENT,
             traces_sample_rate=cfg.SENTRY_TRACES_SAMPLE_RATE,
             integrations=(
-                [LoggingIntegration(capture_sentry_logs=True)]
-                if cfg.SENTRY_CAPTURE_LOGS
-                else []
+                [LoggingIntegration(capture_sentry_logs=True)] if cfg.SENTRY_CAPTURE_LOGS else []
             ),
         )
 

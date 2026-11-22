@@ -56,9 +56,7 @@ async def test_register_weak_password_returns_422_error_envelope(
     assert err["details"]["fields"]
 
 
-async def test_login_refresh_and_me_flow(
-    client: AsyncClient, student_user: User
-) -> None:
+async def test_login_refresh_and_me_flow(client: AsyncClient, student_user: User) -> None:
     bad_login = await client.post(
         "/api/v1/auth/login",
         json={"email": student_user.email, "password": "WrongPassword1"},
@@ -131,12 +129,8 @@ async def test_admin_user_management_and_rbac(
     admin_headers: dict[str, str],
 ) -> None:
     # Student and instructor blocked from admin endpoints
-    assert (
-        await client.get("/api/v1/users", headers=student_headers)
-    ).status_code == 403
-    assert (
-        await client.get("/api/v1/users", headers=instructor_headers)
-    ).status_code == 403
+    assert (await client.get("/api/v1/users", headers=student_headers)).status_code == 403
+    assert (await client.get("/api/v1/users", headers=instructor_headers)).status_code == 403
 
     # Admin lists users with search/role filters
     list_resp = await client.get(
@@ -206,9 +200,7 @@ async def test_admin_user_management_and_rbac(
     disposable = await create_user_record(
         db_session, email="temp@example.com", role=UserRole.STUDENT
     )
-    del_resp = await client.delete(
-        f"/api/v1/users/{disposable.id}", headers=admin_headers
-    )
+    del_resp = await client.delete(f"/api/v1/users/{disposable.id}", headers=admin_headers)
     assert del_resp.status_code == 204
     missing = await client.get(f"/api/v1/users/{disposable.id}", headers=admin_headers)
     assert missing.status_code == 404

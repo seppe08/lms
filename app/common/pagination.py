@@ -13,9 +13,7 @@ class PaginationParams:
 
     def __init__(
         self,
-        page: int = Query(
-            default=DEFAULT_PAGE, ge=1, description="Page number (1-indexed)"
-        ),
+        page: int = Query(default=DEFAULT_PAGE, ge=1, description="Page number (1-indexed)"),
         per_page: int = Query(
             default=DEFAULT_PER_PAGE,
             ge=1,

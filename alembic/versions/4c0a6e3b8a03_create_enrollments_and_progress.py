@@ -68,15 +68,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id", name=op.f("pk_enrollments")),
         sa.UniqueConstraint("user_id", "course_id", name="uq_enrollments_user_course"),
     )
-    op.create_index(
-        op.f("ix_enrollments_user_id"), "enrollments", ["user_id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_enrollments_course_id"), "enrollments", ["course_id"], unique=False
-    )
-    op.create_index(
-        op.f("ix_enrollments_status"), "enrollments", ["status"], unique=False
-    )
+    op.create_index(op.f("ix_enrollments_user_id"), "enrollments", ["user_id"], unique=False)
+    op.create_index(op.f("ix_enrollments_course_id"), "enrollments", ["course_id"], unique=False)
+    op.create_index(op.f("ix_enrollments_status"), "enrollments", ["status"], unique=False)
 
     op.create_table(
         "lesson_progress",
@@ -102,9 +96,7 @@ def upgrade() -> None:
             ondelete="CASCADE",
         ),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_lesson_progress")),
-        sa.UniqueConstraint(
-            "user_id", "lesson_id", name="uq_lesson_progress_user_lesson"
-        ),
+        sa.UniqueConstraint("user_id", "lesson_id", name="uq_lesson_progress_user_lesson"),
     )
     op.create_index(
         op.f("ix_lesson_progress_user_id"), "lesson_progress", ["user_id"], unique=False

@@ -26,9 +26,7 @@ class CourseCreate(BaseModel):
     )
 
     title: str = Field(min_length=3, max_length=200)
-    slug: str | None = Field(
-        default=None, min_length=3, max_length=220, pattern=r"^[a-z0-9-]+$"
-    )
+    slug: str | None = Field(default=None, min_length=3, max_length=220, pattern=r"^[a-z0-9-]+$")
     description: str | None = Field(default=None, max_length=5000)
 
 
@@ -43,9 +41,7 @@ class CourseUpdate(BaseModel):
     )
 
     title: str | None = Field(default=None, min_length=3, max_length=200)
-    slug: str | None = Field(
-        default=None, min_length=3, max_length=220, pattern=r"^[a-z0-9-]+$"
-    )
+    slug: str | None = Field(default=None, min_length=3, max_length=220, pattern=r"^[a-z0-9-]+$")
     description: str | None = Field(default=None, max_length=5000)
 
 
@@ -95,9 +91,7 @@ class LessonCreate(BaseModel):
                 raise ValueError("Text lessons require non-empty content")
         elif self.content_type in (LessonContentType.VIDEO, LessonContentType.LINK):
             if not self.content_url:
-                raise ValueError(
-                    f"{self.content_type.value.capitalize()} lessons require a URL"
-                )
+                raise ValueError(f"{self.content_type.value.capitalize()} lessons require a URL")
         return self
 
 

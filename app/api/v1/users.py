@@ -47,12 +47,8 @@ async def list_users(
     admin: AdminUser,
     pagination: PaginationDep,
     role: Annotated[UserRole | None, Query(description="Filter by user role")] = None,
-    is_active: Annotated[
-        bool | None, Query(description="Filter by active status")
-    ] = None,
-    search: Annotated[
-        str | None, Query(max_length=100, description="Search email or name")
-    ] = None,
+    is_active: Annotated[bool | None, Query(description="Filter by active status")] = None,
+    search: Annotated[str | None, Query(max_length=100, description="Search email or name")] = None,
 ) -> PaginatedResponse[UserRead]:
     users, total = await user_service.list_users(
         db,

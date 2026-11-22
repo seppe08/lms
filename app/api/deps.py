@@ -54,9 +54,7 @@ async def _resolve_user_from_credentials(
 
 async def get_current_user(
     db: DbSession,
-    credentials: Annotated[
-        HTTPAuthorizationCredentials | None, Depends(bearer_scheme)
-    ] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
 ) -> User:
     user = await _resolve_user_from_credentials(credentials, db, required=True)
     assert user is not None
@@ -65,9 +63,7 @@ async def get_current_user(
 
 async def get_optional_current_user(
     db: DbSession,
-    credentials: Annotated[
-        HTTPAuthorizationCredentials | None, Depends(bearer_scheme)
-    ] = None,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(bearer_scheme)] = None,
 ) -> User | None:
     return await _resolve_user_from_credentials(credentials, db, required=False)
 

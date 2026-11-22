@@ -133,16 +133,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         details = exc.detail if isinstance(exc.detail, dict) else {}
         return JSONResponse(
             status_code=exc.status_code,
-            content=build_error_payload(
-                _http_status_to_code(exc.status_code), message, details
-            ),
+            content=build_error_payload(_http_status_to_code(exc.status_code), message, details),
             headers=exc.headers,
         )
 
     @app.exception_handler(Exception)
-    async def unhandled_exception_handler(
-        _request: Request, exc: Exception
-    ) -> JSONResponse:
+    async def unhandled_exception_handler(_request: Request, exc: Exception) -> JSONResponse:
         logger.exception("Unhandled server exception: %s", exc)
         return JSONResponse(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

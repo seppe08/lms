@@ -102,15 +102,11 @@ async def test_course_crud_publish_and_visibility(
     assert search_resp.json()["items"][0]["id"] == course_id
 
     # Admin can unpublish, archive, and delete any course
-    unpub = await client.post(
-        f"/api/v1/courses/{course_id}/unpublish", headers=admin_headers
-    )
+    unpub = await client.post(f"/api/v1/courses/{course_id}/unpublish", headers=admin_headers)
     assert unpub.status_code == 200
     assert unpub.json()["status"] == "draft"
 
-    arch = await client.post(
-        f"/api/v1/courses/{course_id}/archive", headers=admin_headers
-    )
+    arch = await client.post(f"/api/v1/courses/{course_id}/archive", headers=admin_headers)
     assert arch.status_code == 200
     assert arch.json()["status"] == "archived"
 
@@ -277,9 +273,7 @@ async def test_modules_and_lessons_nested_crud_and_reorder(
     assert patched_mod.json()["title"] == "Foundations"
 
     # Publish and verify public course detail omits gated lesson body content/URL
-    await client.post(
-        f"/api/v1/courses/{course_id}/publish", headers=instructor_headers
-    )
+    await client.post(f"/api/v1/courses/{course_id}/publish", headers=instructor_headers)
     detail = (await client.get(f"/api/v1/courses/{course_id}")).json()
     first_lesson_outline = detail["modules"][1]["lessons"][0]
     assert "content" not in first_lesson_outline

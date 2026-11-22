@@ -74,9 +74,7 @@ async def list_published_courses(
         filters.append(Course.instructor_id == instructor_id)
     if search:
         pattern = f"%{search.strip()}%"
-        filters.append(
-            or_(Course.title.ilike(pattern), Course.description.ilike(pattern))
-        )
+        filters.append(or_(Course.title.ilike(pattern), Course.description.ilike(pattern)))
 
     total = int(await db.scalar(select(func.count(Course.id)).where(*filters)) or 0)
     offset = (page - 1) * per_page
@@ -110,9 +108,7 @@ async def list_manageable_courses(
         filters.append(Course.status == status.value)
     if search:
         pattern = f"%{search.strip()}%"
-        filters.append(
-            or_(Course.title.ilike(pattern), Course.description.ilike(pattern))
-        )
+        filters.append(or_(Course.title.ilike(pattern), Course.description.ilike(pattern)))
 
     total = int(await db.scalar(select(func.count(Course.id)).where(*filters)) or 0)
     offset = (page - 1) * per_page
@@ -128,17 +124,13 @@ async def list_manageable_courses(
     return items, total
 
 
-async def create_course(
-    db: AsyncSession, *, actor: User, payload: CourseCreate
-) -> Course:
+async def create_course(db: AsyncSession, *, actor: User, payload: CourseCreate) -> Course:
     _assert_instructor_or_admin(actor)
 
     if payload.slug:
         exists = await db.scalar(select(Course.id).where(Course.slug == payload.slug))
         if exists is not None:
-            raise ConflictError(
-                "Course slug already exists", code="SLUG_ALREADY_EXISTS"
-            )
+            raise ConflictError("Course slug already exists", code="SLUG_ALREADY_EXISTS")
         slug = payload.slug
     else:
         slug = await _generate_unique_slug(db, payload.title)
@@ -155,15 +147,9 @@ async def create_course(
         await db.commit()
     except IntegrityError as exc:
         await db.rollback()
-        raise ConflictError(
-            "Course slug already exists", code="SLUG_ALREADY_EXISTS"
-        ) from exc
+        raise ConflictError("Course slug already exists", code="SLUG_ALREADY_EXISTS") from exc
 
-    stmt = (
-        select(Course)
-        .options(joinedload(Course.instructor))
-        .where(Course.id == course.id)
-    )
+    stmt = select(Course).options(joinedload(Course.instructor)).where(Course.id == course.id)
     return (await db.scalars(stmt)).one()
 
 
@@ -191,14 +177,8 @@ async def get_course_detail(
     return course
 
 
-async def _get_course_for_write(
-    db: AsyncSession, course_id: int, actor: User
-) -> Course:
-    stmt = (
-        select(Course)
-        .options(joinedload(Course.instructor))
-        .where(Course.id == course_id)
-    )
+async def _get_course_for_write(db: AsyncSession, course_id: int, actor: User) -> Course:
+    stmt = select(Course).options(joinedload(Course.instructor)).where(Course.id == course_id)
     course = (await db.scalars(stmt)).unique().one_or_none()
     if not course:
         raise NotFoundError("Course not found", code="COURSE_NOT_FOUND")
@@ -218,14 +198,10 @@ async def update_course(
 
     if "slug" in updates and updates["slug"] is not None:
         exists = await db.scalar(
-            select(Course.id).where(
-                Course.slug == updates["slug"], Course.id != course.id
-            )
+            select(Course.id).where(Course.slug == updates["slug"], Course.id != course.id)
         )
         if exists is not None:
-            raise ConflictError(
-                "Course slug already exists", code="SLUG_ALREADY_EXISTS"
-            )
+            raise ConflictError("Course slug already exists", code="SLUG_ALREADY_EXISTS")
 
     for field, value in updates.items():
         if field == "title" and value is not None:
@@ -238,9 +214,7 @@ async def update_course(
         await db.refresh(course)
     except IntegrityError as exc:
         await db.rollback()
-        raise ConflictError(
-            "Course slug already exists", code="SLUG_ALREADY_EXISTS"
-        ) from exc
+        raise ConflictError("Course slug already exists", code="SLUG_ALREADY_EXISTS") from exc
     return course
 
 
@@ -297,9 +271,7 @@ async def create_module(
     course = await _get_course_for_write(db, course_id, actor)
     if payload.position is None:
         max_pos = await db.scalar(
-            select(func.coalesce(func.max(Module.position), 0)).where(
-                Module.course_id == course.id
-            )
+            select(func.coalesce(func.max(Module.position), 0)).where(Module.course_id == course.id)
         )
         position = int(max_pos or 0) + 1
     else:
@@ -316,12 +288,8 @@ async def create_module(
     return module
 
 
-async def _get_module_for_write(
-    db: AsyncSession, module_id: int, actor: User
-) -> Module:
-    stmt = (
-        select(Module).options(joinedload(Module.course)).where(Module.id == module_id)
-    )
+async def _get_module_for_write(db: AsyncSession, module_id: int, actor: User) -> Module:
+    stmt = select(Module).options(joinedload(Module.course)).where(Module.id == module_id)
     module = (await db.scalars(stmt)).unique().one_or_none()
     if not module:
         raise NotFoundError("Module not found", code="MODULE_NOT_FOUND")
@@ -360,11 +328,7 @@ async def reorder_modules(
     ordered_ids: list[int],
 ) -> list[Module]:
     course = await _get_course_for_write(db, course_id, actor)
-    stmt = (
-        select(Module)
-        .where(Module.course_id == course.id)
-        .order_by(Module.position.asc())
-    )
+    stmt = select(Module).where(Module.course_id == course.id).order_by(Module.position.asc())
     modules = list((await db.scalars(stmt)).all())
     existing_map = {m.id: m for m in modules}
 
@@ -385,9 +349,7 @@ async def reorder_modules(
 
     refreshed = (
         await db.scalars(
-            select(Module)
-            .where(Module.course_id == course.id)
-            .order_by(Module.position.asc())
+            select(Module).where(Module.course_id == course.id).order_by(Module.position.asc())
         )
     ).all()
     return list(refreshed)
@@ -418,9 +380,7 @@ async def create_lesson(
     module = await _get_module_for_write(db, module_id, actor)
     if payload.position is None:
         max_pos = await db.scalar(
-            select(func.coalesce(func.max(Lesson.position), 0)).where(
-                Lesson.module_id == module.id
-            )
+            select(func.coalesce(func.max(Lesson.position), 0)).where(Lesson.module_id == module.id)
         )
         position = int(max_pos or 0) + 1
     else:
@@ -445,9 +405,7 @@ async def create_lesson(
     return lesson
 
 
-async def get_lesson_content(
-    db: AsyncSession, *, lesson_id: int, actor: User
-) -> Lesson:
+async def get_lesson_content(db: AsyncSession, *, lesson_id: int, actor: User) -> Lesson:
     """Return full lesson content only to enrolled active students, course instructor, or admin."""
     stmt = (
         select(Lesson)
@@ -480,9 +438,7 @@ async def get_lesson_content(
     return lesson
 
 
-async def _get_lesson_for_write(
-    db: AsyncSession, lesson_id: int, actor: User
-) -> Lesson:
+async def _get_lesson_for_write(db: AsyncSession, lesson_id: int, actor: User) -> Lesson:
     stmt = (
         select(Lesson)
         .options(joinedload(Lesson.module).joinedload(Module.course))
@@ -507,9 +463,7 @@ async def update_lesson(
 
     new_type = updates.get("content_type")
     effective_type = (
-        new_type.value
-        if isinstance(new_type, LessonContentType)
-        else lesson.content_type
+        new_type.value if isinstance(new_type, LessonContentType) else lesson.content_type
     )
     effective_content = updates.get("content", lesson.content)
     effective_url = updates.get("content_url", lesson.content_url)
@@ -522,9 +476,7 @@ async def update_lesson(
         LessonContentType.LINK.value,
     ):
         if not effective_url:
-            raise ValidationError(
-                f"{effective_type.capitalize()} lessons require a content_url"
-            )
+            raise ValidationError(f"{effective_type.capitalize()} lessons require a content_url")
 
     for field, value in updates.items():
         if field == "content_type" and isinstance(value, LessonContentType):
@@ -551,11 +503,7 @@ async def reorder_lessons(
     ordered_ids: list[int],
 ) -> list[Lesson]:
     module = await _get_module_for_write(db, module_id, actor)
-    stmt = (
-        select(Lesson)
-        .where(Lesson.module_id == module.id)
-        .order_by(Lesson.position.asc())
-    )
+    stmt = select(Lesson).where(Lesson.module_id == module.id).order_by(Lesson.position.asc())
     lessons = list((await db.scalars(stmt)).all())
     existing_map = {lesson.id: lesson for lesson in lessons}
 
@@ -576,9 +524,7 @@ async def reorder_lessons(
 
     refreshed = (
         await db.scalars(
-            select(Lesson)
-            .where(Lesson.module_id == module.id)
-            .order_by(Lesson.position.asc())
+            select(Lesson).where(Lesson.module_id == module.id).order_by(Lesson.position.asc())
         )
     ).all()
     return list(refreshed)
