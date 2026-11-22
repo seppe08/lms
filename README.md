@@ -162,7 +162,9 @@ User ──< Enrollment >── Course ──< Module ──< Lesson
 | `RATE_LIMIT_ENABLED` | No | `true` | Enable sliding-window rate limiting on auth routes |
 | `AUTH_RATE_LIMIT_REQUESTS` | No | `10` | Max requests per window per IP on register/login |
 | `AUTH_RATE_LIMIT_WINDOW_SECONDS` | No | `60` | Rate limit window in seconds |
-| `SENTRY_DSN` | No | `""` | Optional Sentry DSN for error tracking |
+| `SENTRY_DSN` | No | `""` | Optional Sentry DSN for error tracking; SDK stays disabled when empty |
+| `SENTRY_TRACES_SAMPLE_RATE` | No | `0.1` | Fraction of traces sent to Sentry (`0.0`-`1.0`); `0.0` disables new traces |
+| `SENTRY_CAPTURE_LOGS` | No | `true` | Forward standard-library `logging` records to Sentry Logs |
 
 ---
 

@@ -13,16 +13,31 @@ from app.db.session import engine
 
 OPENAPI_TAGS = [
     {"name": "health", "description": "Service liveness and readiness checks."},
-    {"name": "auth", "description": "Registration, login, and JWT refresh token lifecycle."},
+    {
+        "name": "auth",
+        "description": "Registration, login, and JWT refresh token lifecycle.",
+    },
     {
         "name": "users",
         "description": "Self-service user profile and administrator user management.",
     },
-    {"name": "courses", "description": "Course catalog, publishing workflow, and management."},
+    {
+        "name": "courses",
+        "description": "Course catalog, publishing workflow, and management.",
+    },
     {"name": "modules", "description": "Ordered course modules (sections)."},
-    {"name": "lessons", "description": "Ordered module lessons with enrollment-gated content."},
-    {"name": "enrollments", "description": "Course enrollment, unenrollment, and rosters."},
-    {"name": "progress", "description": "Lesson completion tracking and course completion %."},
+    {
+        "name": "lessons",
+        "description": "Ordered module lessons with enrollment-gated content.",
+    },
+    {
+        "name": "enrollments",
+        "description": "Course enrollment, unenrollment, and rosters.",
+    },
+    {
+        "name": "progress",
+        "description": "Lesson completion tracking and course completion %.",
+    },
 ]
 
 
@@ -38,8 +53,16 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
 
     if cfg.SENTRY_DSN:
         import sentry_sdk
+        from sentry_sdk.integrations.logging import LoggingIntegration
 
-        sentry_sdk.init(dsn=cfg.SENTRY_DSN, environment=cfg.ENVIRONMENT)
+        sentry_sdk.init(
+            dsn=cfg.SENTRY_DSN,
+            environment=cfg.ENVIRONMENT,
+            traces_sample_rate=cfg.SENTRY_TRACES_SAMPLE_RATE,
+            integrations=(
+                [LoggingIntegration(capture_sentry_logs=True)] if cfg.SENTRY_CAPTURE_LOGS else []
+            ),
+        )
 
     application = FastAPI(
         title=cfg.PROJECT_NAME,

@@ -102,7 +102,10 @@ def upgrade() -> None:
         op.f("ix_lesson_progress_user_id"), "lesson_progress", ["user_id"], unique=False
     )
     op.create_index(
-        op.f("ix_lesson_progress_lesson_id"), "lesson_progress", ["lesson_id"], unique=False
+        op.f("ix_lesson_progress_lesson_id"),
+        "lesson_progress",
+        ["lesson_id"],
+        unique=False,
     )
 
 

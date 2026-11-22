@@ -43,7 +43,9 @@ async def test_register_sets_student_role_server_side_and_rejects_duplicate(
     assert dup.json()["error"]["code"] == "EMAIL_ALREADY_EXISTS"
 
 
-async def test_register_weak_password_returns_422_error_envelope(client: AsyncClient) -> None:
+async def test_register_weak_password_returns_422_error_envelope(
+    client: AsyncClient,
+) -> None:
     resp = await client.post(
         "/api/v1/auth/register",
         json={"email": "weak@example.com", "password": "short"},

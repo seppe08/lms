@@ -1,4 +1,10 @@
-from app.schemas.auth import AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, TokenPair
+from app.schemas.auth import (
+    AuthResponse,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenPair,
+)
 from app.schemas.course import (
     CourseCreate,
     CourseDetailRead,
@@ -14,8 +20,16 @@ from app.schemas.course import (
     ModuleUpdate,
     ReorderRequest,
 )
-from app.schemas.enrollment import EnrollmentRead, EnrollmentWithCourseRead, RosterStudentRead
-from app.schemas.progress import CourseProgressRead, LessonCompletionResponse, LessonProgressRead
+from app.schemas.enrollment import (
+    EnrollmentRead,
+    EnrollmentWithCourseRead,
+    RosterStudentRead,
+)
+from app.schemas.progress import (
+    CourseProgressRead,
+    LessonCompletionResponse,
+    LessonProgressRead,
+)
 from app.schemas.user import AdminUserUpdate, UserRead, UserSummary, UserUpdate
 
 __all__ = [

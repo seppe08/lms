@@ -9,7 +9,11 @@ from app.models.course import Course, Lesson, Module
 from app.models.enrollment import Enrollment, LessonProgress
 from app.models.enums import EnrollmentStatus
 from app.models.user import User
-from app.schemas.progress import CourseProgressRead, LessonCompletionResponse, LessonProgressRead
+from app.schemas.progress import (
+    CourseProgressRead,
+    LessonCompletionResponse,
+    LessonProgressRead,
+)
 from app.services.course_service import assert_can_manage_course, can_manage_course
 
 

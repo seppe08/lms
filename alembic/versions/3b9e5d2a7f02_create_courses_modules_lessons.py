@@ -90,7 +90,10 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_modules_course_id"), "modules", ["course_id"], unique=False)
     op.create_index(
-        "ix_modules_course_id_position", "modules", ["course_id", "position"], unique=False
+        "ix_modules_course_id_position",
+        "modules",
+        ["course_id", "position"],
+        unique=False,
     )
 
     op.create_table(
@@ -134,7 +137,10 @@ def upgrade() -> None:
     )
     op.create_index(op.f("ix_lessons_module_id"), "lessons", ["module_id"], unique=False)
     op.create_index(
-        "ix_lessons_module_id_position", "lessons", ["module_id", "position"], unique=False
+        "ix_lessons_module_id_position",
+        "lessons",
+        ["module_id", "position"],
+        unique=False,
     )
 
 

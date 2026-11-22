@@ -471,7 +471,10 @@ async def update_lesson(
     if effective_type == LessonContentType.TEXT.value:
         if not effective_content or not str(effective_content).strip():
             raise ValidationError("Text lessons require non-empty content")
-    elif effective_type in (LessonContentType.VIDEO.value, LessonContentType.LINK.value):
+    elif effective_type in (
+        LessonContentType.VIDEO.value,
+        LessonContentType.LINK.value,
+    ):
         if not effective_url:
             raise ValidationError(f"{effective_type.capitalize()} lessons require a content_url")
 

@@ -2,7 +2,11 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import CourseStatus, LessonContentType, User
-from tests.factories import create_course_record, create_lesson_record, create_module_record
+from tests.factories import (
+    create_course_record,
+    create_lesson_record,
+    create_module_record,
+)
 
 
 async def test_end_to_end_student_journey(
