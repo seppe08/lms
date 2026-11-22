@@ -152,7 +152,7 @@ User ──< Enrollment >── Course ──< Module ──< Lesson
 | `ENVIRONMENT` | No | `development` | `local`, `development`, `testing`, or `production` |
 | `DEBUG` | No | `false` | Must be `false` in `production` |
 | `LOG_LEVEL` | No | `INFO` | Root logging level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
-| `DATABASE_URL` | **Yes** | — | Async SQLAlchemy URL (`postgresql+asyncpg://...`) |
+| `DATABASE_URL` | **Yes** | — | Async SQLAlchemy URL (`postgresql+asyncpg://...`); URL-encode special characters in credentials (for example, `@` as `%40`) |
 | `SECRET_KEY` | **Yes** | — | App secret (>= 32 chars required in `production`) |
 | `JWT_SECRET_KEY` | **Yes** | — | JWT signing key (>= 32 chars required in `production`) |
 | `JWT_ALGORITHM` | No | `HS256` | JWT signing algorithm |
