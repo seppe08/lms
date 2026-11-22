@@ -8,6 +8,11 @@ from starlette.responses import Response
 
 from app.core.config import settings
 from app.core.logging import request_id_ctx_var
+from app.core.sentry_agent import (
+    CONVERSATION_ID_HEADER,
+    bind_conversation_id,
+    clear_conversation_id,
+)
 
 logger = logging.getLogger("app.access")
 
@@ -36,6 +41,22 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
             return response
         finally:
             request_id_ctx_var.reset(token)
+
+
+class SentryAgentMiddleware(BaseHTTPMiddleware):
+    """Binds a stable conversation ID to the Sentry scope for the request.
+
+    Supported AI integrations create ``gen_ai`` spans on this scope, which lets
+    Sentry group multiple turns and traces into one conversation.
+    """
+
+    async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
+        conversation_id = bind_conversation_id(request.headers.get(CONVERSATION_ID_HEADER))
+        try:
+            return await call_next(request)
+        finally:
+            if conversation_id:
+                clear_conversation_id()
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

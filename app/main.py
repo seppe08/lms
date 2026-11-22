@@ -6,7 +6,11 @@ from fastapi.responses import RedirectResponse
 
 from app.api.v1.router import api_router
 from app.common.errors import register_exception_handlers
-from app.common.middleware import RequestIDMiddleware, SecurityHeadersMiddleware
+from app.common.middleware import (
+    RequestIDMiddleware,
+    SecurityHeadersMiddleware,
+    SentryAgentMiddleware,
+)
 from app.core.config import Settings, settings
 from app.core.logging import configure_logging
 from app.db.session import engine
@@ -59,6 +63,14 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
             dsn=cfg.SENTRY_DSN,
             environment=cfg.ENVIRONMENT,
             traces_sample_rate=cfg.SENTRY_TRACES_SAMPLE_RATE,
+            # Agent Tracing transcripts need prompts and responses. In SDK 2.x
+            # gen_ai content is off by default unless data_collection is set.
+            data_collection={
+                "gen_ai": {
+                    "inputs": cfg.SENTRY_AI_CAPTURE_INPUTS,
+                    "outputs": cfg.SENTRY_AI_CAPTURE_OUTPUTS,
+                }
+            },
             integrations=(
                 [LoggingIntegration(capture_sentry_logs=True)] if cfg.SENTRY_CAPTURE_LOGS else []
             ),
@@ -79,12 +91,18 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
 
     application.add_middleware(SecurityHeadersMiddleware)
     application.add_middleware(RequestIDMiddleware)
+    application.add_middleware(SentryAgentMiddleware)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.CORS_ORIGINS,
         allow_credentials=True,
         allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-        allow_headers=["Authorization", "Content-Type", "X-Request-ID"],
+        allow_headers=[
+            "Authorization",
+            "Content-Type",
+            "X-Request-ID",
+            "X-Sentry-Conversation-ID",
+        ],
     )
 
     register_exception_handlers(application)
@@ -97,6 +115,10 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
     @application.get("/health", tags=["health"], summary="Root health check")
     async def health() -> dict[str, str]:
         return {"status": "ok"}
+
+    @application.get("/sentry-debug", tags=["sentry"], summary="Sentry health check")
+    async def trigger_error():
+        division_by_zero = 1 / 0  # noqa: F841
 
     return application
 

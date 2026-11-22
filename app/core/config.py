@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     # Fraction of traces sent to Sentry (0.0 disables new traces, 1.0 captures all).
     SENTRY_TRACES_SAMPLE_RATE: float = Field(default=0.1, ge=0.0, le=1.0)
     SENTRY_CAPTURE_LOGS: bool = True
+    # Agent Tracing needs prompts/responses to build the conversation transcript.
+    SENTRY_AI_CAPTURE_INPUTS: bool = True
+    SENTRY_AI_CAPTURE_OUTPUTS: bool = True
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
