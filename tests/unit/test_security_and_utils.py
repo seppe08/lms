@@ -76,7 +76,9 @@ def test_slugify(raw: str, expected: str) -> None:
         (6, 4, 100.0),
     ],
 )
-def test_calculate_completion_percentage(completed: int, total: int, expected: float) -> None:
+def test_calculate_completion_percentage(
+    completed: int, total: int, expected: float
+) -> None:
     assert calculate_completion_percentage(completed, total) == expected
 
 

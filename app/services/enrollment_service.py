@@ -16,7 +16,9 @@ from app.schemas.user import UserSummary
 from app.services.course_service import assert_can_manage_course
 
 
-async def enroll_in_course(db: AsyncSession, *, course_id: int, actor: User) -> Enrollment:
+async def enroll_in_course(
+    db: AsyncSession, *, course_id: int, actor: User
+) -> Enrollment:
     course = await db.get(Course, course_id)
     if not course:
         raise NotFoundError("Course not found", code="COURSE_NOT_FOUND")
@@ -34,7 +36,9 @@ async def enroll_in_course(db: AsyncSession, *, course_id: int, actor: User) -> 
     )
     if existing:
         if existing.status == EnrollmentStatus.ACTIVE.value:
-            raise ConflictError("Already enrolled in this course", code="ALREADY_ENROLLED")
+            raise ConflictError(
+                "Already enrolled in this course", code="ALREADY_ENROLLED"
+            )
         existing.status = EnrollmentStatus.ACTIVE.value
         existing.enrolled_at = datetime.now(UTC).replace(tzinfo=None)
         try:
@@ -56,11 +60,15 @@ async def enroll_in_course(db: AsyncSession, *, course_id: int, actor: User) -> 
         await db.refresh(enrollment)
     except IntegrityError as exc:
         await db.rollback()
-        raise ConflictError("Already enrolled in this course", code="ALREADY_ENROLLED") from exc
+        raise ConflictError(
+            "Already enrolled in this course", code="ALREADY_ENROLLED"
+        ) from exc
     return enrollment
 
 
-async def unenroll_from_course(db: AsyncSession, *, course_id: int, actor: User) -> None:
+async def unenroll_from_course(
+    db: AsyncSession, *, course_id: int, actor: User
+) -> None:
     enrollment = await db.scalar(
         select(Enrollment).where(
             Enrollment.user_id == actor.id,

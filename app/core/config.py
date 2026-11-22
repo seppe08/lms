@@ -9,7 +9,9 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     PROJECT_NAME: str = "LMS API"
-    ENVIRONMENT: Literal["local", "development", "testing", "production"] = "development"
+    ENVIRONMENT: Literal["local", "development", "testing", "production"] = (
+        "development"
+    )
     DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
 
@@ -37,7 +39,9 @@ class Settings(BaseSettings):
             if self.DEBUG:
                 raise ValueError("DEBUG must be False in production")
             if len(self.SECRET_KEY) < 32 or len(self.JWT_SECRET_KEY) < 32:
-                raise ValueError("SECRET_KEY and JWT_SECRET_KEY must be >= 32 chars in production")
+                raise ValueError(
+                    "SECRET_KEY and JWT_SECRET_KEY must be >= 32 chars in production"
+                )
             if "*" in self.CORS_ORIGINS:
                 raise ValueError("Wildcard CORS_ORIGINS is not allowed in production")
         return self

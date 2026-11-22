@@ -23,7 +23,9 @@ def _build_token_pair(user: User) -> TokenPair:
     )
 
 
-async def register_user(db: AsyncSession, payload: RegisterRequest) -> tuple[User, TokenPair]:
+async def register_user(
+    db: AsyncSession, payload: RegisterRequest
+) -> tuple[User, TokenPair]:
     existing = await db.scalar(select(User).where(User.email == payload.email))
     if existing:
         raise ConflictError("Email is already registered", code="EMAIL_ALREADY_EXISTS")
@@ -41,7 +43,9 @@ async def register_user(db: AsyncSession, payload: RegisterRequest) -> tuple[Use
         await db.refresh(user)
     except IntegrityError as exc:
         await db.rollback()
-        raise ConflictError("Email is already registered", code="EMAIL_ALREADY_EXISTS") from exc
+        raise ConflictError(
+            "Email is already registered", code="EMAIL_ALREADY_EXISTS"
+        ) from exc
 
     return user, _build_token_pair(user)
 

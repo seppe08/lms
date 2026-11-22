@@ -2,7 +2,11 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models import CourseStatus, LessonContentType, User
-from tests.factories import create_course_record, create_lesson_record, create_module_record
+from tests.factories import (
+    create_course_record,
+    create_lesson_record,
+    create_module_record,
+)
 
 
 async def test_end_to_end_student_journey(
@@ -20,7 +24,9 @@ async def test_end_to_end_student_journey(
         title="Backend Engineering 101",
         status=CourseStatus.PUBLISHED,
     )
-    module = await create_module_record(db_session, course=course, title="Week 1", position=1)
+    module = await create_module_record(
+        db_session, course=course, title="Week 1", position=1
+    )
     lesson_1 = await create_lesson_record(
         db_session,
         module=module,
@@ -59,7 +65,9 @@ async def test_end_to_end_student_journey(
     assert any(item["id"] == course.id for item in catalog.json()["items"])
 
     # Before enrolling: lesson content and progress are BLOCKED for student (403)
-    assert (await client.get(f"/api/v1/lessons/{lesson_1.id}", headers=headers)).status_code == 403
+    assert (
+        await client.get(f"/api/v1/lessons/{lesson_1.id}", headers=headers)
+    ).status_code == 403
     assert (
         await client.post(f"/api/v1/lessons/{lesson_1.id}/complete", headers=headers)
     ).status_code == 403
@@ -68,7 +76,9 @@ async def test_end_to_end_student_journey(
     ).status_code == 403
 
     # Instructor and admin CAN view lesson content without enrolling
-    inst_lesson = await client.get(f"/api/v1/lessons/{lesson_1.id}", headers=instructor_headers)
+    inst_lesson = await client.get(
+        f"/api/v1/lessons/{lesson_1.id}", headers=instructor_headers
+    )
     assert inst_lesson.status_code == 200
     assert inst_lesson.json()["content"] == "Full HTTP lesson body."
     assert (
@@ -81,7 +91,9 @@ async def test_end_to_end_student_journey(
     assert enroll.json()["status"] == "active"
 
     # Duplicate active enrollment rejected with 409
-    dup_enroll = await client.post(f"/api/v1/courses/{course.id}/enroll", headers=headers)
+    dup_enroll = await client.post(
+        f"/api/v1/courses/{course.id}/enroll", headers=headers
+    )
     assert dup_enroll.status_code == 409
     assert dup_enroll.json()["error"]["code"] == "ALREADY_ENROLLED"
 
@@ -104,7 +116,9 @@ async def test_end_to_end_student_journey(
     assert c1.json()["course_progress"]["total_lessons"] == 2
 
     # Duplicate completion returns 409
-    c1_dup = await client.post(f"/api/v1/lessons/{lesson_1.id}/complete", headers=headers)
+    c1_dup = await client.post(
+        f"/api/v1/lessons/{lesson_1.id}/complete", headers=headers
+    )
     assert c1_dup.status_code == 409
 
     # Complete lesson 2 -> 100% progress
@@ -119,7 +133,9 @@ async def test_end_to_end_student_journey(
     assert set(prog.json()["completed_lesson_ids"]) == {lesson_1.id, lesson_2.id}
 
     # Instructor checks roster and sees 100% progress for the student
-    roster = await client.get(f"/api/v1/courses/{course.id}/roster", headers=instructor_headers)
+    roster = await client.get(
+        f"/api/v1/courses/{course.id}/roster", headers=instructor_headers
+    )
     assert roster.status_code == 200
     assert roster.json()["meta"]["total"] == 1
     entry = roster.json()["items"][0]
@@ -127,17 +143,27 @@ async def test_end_to_end_student_journey(
     assert entry["completion_percentage"] == 100.0
 
     # Unmark lesson 2 -> drops back to 50%
-    unmark = await client.delete(f"/api/v1/lessons/{lesson_2.id}/complete", headers=headers)
+    unmark = await client.delete(
+        f"/api/v1/lessons/{lesson_2.id}/complete", headers=headers
+    )
     assert unmark.status_code == 204
-    prog_after = await client.get(f"/api/v1/courses/{course.id}/progress", headers=headers)
+    prog_after = await client.get(
+        f"/api/v1/courses/{course.id}/progress", headers=headers
+    )
     assert prog_after.json()["completion_percentage"] == 50.0
 
     # 6. Unenroll -> lesson content blocked again, re-enroll reactivates cleanly
-    unenroll = await client.delete(f"/api/v1/courses/{course.id}/enroll", headers=headers)
+    unenroll = await client.delete(
+        f"/api/v1/courses/{course.id}/enroll", headers=headers
+    )
     assert unenroll.status_code == 204
-    assert (await client.get(f"/api/v1/lessons/{lesson_1.id}", headers=headers)).status_code == 403
+    assert (
+        await client.get(f"/api/v1/lessons/{lesson_1.id}", headers=headers)
+    ).status_code == 403
 
-    re_enroll = await client.post(f"/api/v1/courses/{course.id}/enroll", headers=headers)
+    re_enroll = await client.post(
+        f"/api/v1/courses/{course.id}/enroll", headers=headers
+    )
     assert re_enroll.status_code == 201
     assert re_enroll.json()["status"] == "active"
 
@@ -166,8 +192,12 @@ async def test_enroll_unpublished_course_rejected_and_roster_authorization(
     assert resp.json()["error"]["code"] == "COURSE_NOT_PUBLISHED"
 
     # Publish course and check roster/progress authorization
-    await client.post(f"/api/v1/courses/{draft_course.id}/publish", headers=instructor_headers)
-    await client.post(f"/api/v1/courses/{draft_course.id}/enroll", headers=student_headers)
+    await client.post(
+        f"/api/v1/courses/{draft_course.id}/publish", headers=instructor_headers
+    )
+    await client.post(
+        f"/api/v1/courses/{draft_course.id}/enroll", headers=student_headers
+    )
 
     # Other instructor and students cannot view course roster
     assert (

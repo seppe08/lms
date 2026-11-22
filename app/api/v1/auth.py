@@ -2,7 +2,13 @@ from fastapi import APIRouter, Depends, status
 
 from app.api.deps import DbSession
 from app.common.rate_limit import enforce_auth_rate_limit
-from app.schemas.auth import AuthResponse, LoginRequest, RefreshRequest, RegisterRequest, TokenPair
+from app.schemas.auth import (
+    AuthResponse,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
+    TokenPair,
+)
 from app.schemas.user import UserRead
 from app.services import auth_service
 

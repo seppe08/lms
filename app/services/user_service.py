@@ -44,7 +44,13 @@ async def list_users(
     total = int(await db.scalar(count_stmt) or 0)
 
     offset = (page - 1) * per_page
-    stmt = select(User).where(*filters).order_by(User.id.asc()).offset(offset).limit(per_page)
+    stmt = (
+        select(User)
+        .where(*filters)
+        .order_by(User.id.asc())
+        .offset(offset)
+        .limit(per_page)
+    )
     rows = list((await db.scalars(stmt)).all())
     return rows, total
 

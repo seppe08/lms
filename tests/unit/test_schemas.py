@@ -8,7 +8,9 @@ from app.schemas.course import LessonCreate, ReorderRequest
 
 
 def test_register_schema_normalizes_email() -> None:
-    req = RegisterRequest(email="  Ada@Example.COM ", full_name="Ada", password="Password1")
+    req = RegisterRequest(
+        email="  Ada@Example.COM ", full_name="Ada", password="Password1"
+    )
     assert req.email == "ada@example.com"
 
 

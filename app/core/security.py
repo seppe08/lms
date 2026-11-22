@@ -37,10 +37,14 @@ def _create_token(
         "iat": now,
         "exp": now + expires_delta,
     }
-    return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return jwt.encode(
+        payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM
+    )
 
 
-def create_access_token(user_id: int, role: str, expires_delta: timedelta | None = None) -> str:
+def create_access_token(
+    user_id: int, role: str, expires_delta: timedelta | None = None
+) -> str:
     delta = expires_delta or timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     return _create_token(
         subject=str(user_id),
@@ -50,7 +54,9 @@ def create_access_token(user_id: int, role: str, expires_delta: timedelta | None
     )
 
 
-def create_refresh_token(user_id: int, role: str, expires_delta: timedelta | None = None) -> str:
+def create_refresh_token(
+    user_id: int, role: str, expires_delta: timedelta | None = None
+) -> str:
     delta = expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
     return _create_token(
         subject=str(user_id),
@@ -70,7 +76,9 @@ def decode_token(token: str, expected_type: str = ACCESS_TOKEN_TYPE) -> dict[str
     except jwt.ExpiredSignatureError as exc:
         raise UnauthorizedError("Token has expired", code="TOKEN_EXPIRED") from exc
     except jwt.InvalidTokenError as exc:
-        raise UnauthorizedError("Invalid authentication token", code="INVALID_TOKEN") from exc
+        raise UnauthorizedError(
+            "Invalid authentication token", code="INVALID_TOKEN"
+        ) from exc
 
     if payload.get("type") != expected_type:
         raise UnauthorizedError(

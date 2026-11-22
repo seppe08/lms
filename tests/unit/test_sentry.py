@@ -29,7 +29,9 @@ def test_sentry_traces_sample_rate_is_bounded(rate: float) -> None:
         _settings(SENTRY_TRACES_SAMPLE_RATE=rate)
 
 
-def test_create_app_configures_sentry_when_dsn_is_set(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_create_app_configures_sentry_when_dsn_is_set(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     import sentry_sdk
     from sentry_sdk.integrations.logging import LoggingIntegration
 

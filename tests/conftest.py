@@ -4,7 +4,9 @@ import os
 os.environ.setdefault("ENVIRONMENT", "testing")
 os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
 os.environ.setdefault("SECRET_KEY", "test-secret-key-for-lms-api-minimum-32-chars")
-os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key-for-lms-api-minimum-32-chars")
+os.environ.setdefault(
+    "JWT_SECRET_KEY", "test-jwt-secret-key-for-lms-api-minimum-32-chars"
+)
 os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
 os.environ.setdefault("CORS_ORIGINS", '["http://localhost:3000"]')
 
@@ -28,7 +30,9 @@ from tests.factories import create_user_record
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Isolated per-test async database session with foreign keys enforced."""
     test_db_url = os.environ.get("TEST_DATABASE_URL", "sqlite+aiosqlite:///:memory:")
-    connect_args = {"check_same_thread": False} if test_db_url.startswith("sqlite") else {}
+    connect_args = (
+        {"check_same_thread": False} if test_db_url.startswith("sqlite") else {}
+    )
     engine = create_async_engine(test_db_url, connect_args=connect_args)
 
     if test_db_url.startswith("sqlite"):
@@ -62,7 +66,9 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     test_app.dependency_overrides[get_db] = _override_get_db
 
     transport = ASGITransport(app=test_app)
-    async with AsyncClient(transport=transport, base_url="http://testserver") as async_client:
+    async with AsyncClient(
+        transport=transport, base_url="http://testserver"
+    ) as async_client:
         yield async_client
 
     test_app.dependency_overrides.clear()

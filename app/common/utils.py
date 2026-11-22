@@ -9,7 +9,9 @@ def slugify(value: str) -> str:
     return normalized.strip("-") or "course"
 
 
-def calculate_completion_percentage(completed_lessons: int, total_lessons: int) -> float:
+def calculate_completion_percentage(
+    completed_lessons: int, total_lessons: int
+) -> float:
     """Compute course completion percentage rounded to two decimal places."""
     if total_lessons <= 0:
         return 0.0

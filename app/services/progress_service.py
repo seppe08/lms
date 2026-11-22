@@ -9,7 +9,11 @@ from app.models.course import Course, Lesson, Module
 from app.models.enrollment import Enrollment, LessonProgress
 from app.models.enums import EnrollmentStatus
 from app.models.user import User
-from app.schemas.progress import CourseProgressRead, LessonCompletionResponse, LessonProgressRead
+from app.schemas.progress import (
+    CourseProgressRead,
+    LessonCompletionResponse,
+    LessonProgressRead,
+)
 from app.services.course_service import assert_can_manage_course, can_manage_course
 
 
@@ -53,7 +57,9 @@ async def _compute_course_progress(
         user_id=user_id,
         total_lessons=total_lessons,
         completed_lessons=completed_count,
-        completion_percentage=calculate_completion_percentage(completed_count, total_lessons),
+        completion_percentage=calculate_completion_percentage(
+            completed_count, total_lessons
+        ),
         completed_lesson_ids=completed_lesson_ids,
     )
 
@@ -94,7 +100,9 @@ async def mark_lesson_complete(
         )
     )
     if existing:
-        raise ConflictError("Lesson already marked as complete", code="ALREADY_COMPLETED")
+        raise ConflictError(
+            "Lesson already marked as complete", code="ALREADY_COMPLETED"
+        )
 
     progress = LessonProgress(user_id=actor.id, lesson_id=lesson.id)
     db.add(progress)
@@ -103,9 +111,13 @@ async def mark_lesson_complete(
         await db.refresh(progress)
     except IntegrityError as exc:
         await db.rollback()
-        raise ConflictError("Lesson already marked as complete", code="ALREADY_COMPLETED") from exc
+        raise ConflictError(
+            "Lesson already marked as complete", code="ALREADY_COMPLETED"
+        ) from exc
 
-    course_progress = await _compute_course_progress(db, course_id=course_id, user_id=actor.id)
+    course_progress = await _compute_course_progress(
+        db, course_id=course_id, user_id=actor.id
+    )
     return LessonCompletionResponse(
         lesson_progress=LessonProgressRead.model_validate(progress),
         course_progress=course_progress,
@@ -118,7 +130,9 @@ async def unmark_lesson_complete(
     lesson_id: int,
     actor: User,
 ) -> None:
-    stmt = select(Lesson).options(joinedload(Lesson.module)).where(Lesson.id == lesson_id)
+    stmt = (
+        select(Lesson).options(joinedload(Lesson.module)).where(Lesson.id == lesson_id)
+    )
     lesson = (await db.scalars(stmt)).unique().one_or_none()
     if not lesson:
         raise NotFoundError("Lesson not found", code="LESSON_NOT_FOUND")
@@ -143,7 +157,9 @@ async def unmark_lesson_complete(
         )
     )
     if not progress:
-        raise NotFoundError("Lesson completion record not found", code="PROGRESS_NOT_FOUND")
+        raise NotFoundError(
+            "Lesson completion record not found", code="PROGRESS_NOT_FOUND"
+        )
 
     try:
         await db.delete(progress)
@@ -181,4 +197,6 @@ async def get_course_progress(
                 code="ENROLLMENT_REQUIRED",
             )
 
-    return await _compute_course_progress(db, course_id=course.id, user_id=resolved_user_id)
+    return await _compute_course_progress(
+        db, course_id=course.id, user_id=resolved_user_id
+    )
