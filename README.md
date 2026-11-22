@@ -165,6 +165,14 @@ User ──< Enrollment >── Course ──< Module ──< Lesson
 | `SENTRY_DSN` | No | `""` | Optional Sentry DSN for error tracking; SDK stays disabled when empty |
 | `SENTRY_TRACES_SAMPLE_RATE` | No | `0.1` | Fraction of traces sent to Sentry (`0.0`-`1.0`); `0.0` disables new traces |
 | `SENTRY_CAPTURE_LOGS` | No | `true` | Forward standard-library `logging` records to Sentry Logs |
+| `SENTRY_AI_CAPTURE_INPUTS` | No | `true` | Send GenAI prompts/input messages to Sentry Agent Tracing |
+| `SENTRY_AI_CAPTURE_OUTPUTS` | No | `true` | Send GenAI responses/output messages to Sentry Agent Tracing |
+
+### Sentry Agent Tracing and conversations
+
+With `SENTRY_DSN` set, the SDK enables tracing and GenAI input/output capture. Supported AI libraries are instrumented automatically when installed, so their model and tool calls appear as `gen_ai` spans on the surrounding request trace. The app has no AI calls of its own yet; adding a supported library (OpenAI, Anthropic, LangChain, and others) is all that is needed to start producing spans.
+
+Send `X-Sentry-Conversation-ID: conv_<stable-session-id>` on every request of a chat session to group its spans into one Sentry conversation. Use a short opaque ID (letters, digits, `-`, `_`) and reuse it across turns and traces. Authenticated users are attached to the Sentry scope automatically so the Conversations view shows who started each chat. See the [Python Agent Tracing guide](https://docs.sentry.io/platforms/python/agent-tracing/) for details.
 
 ---
 

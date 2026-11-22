@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.common.errors import ForbiddenError, UnauthorizedError
 from app.common.pagination import PaginationParams
 from app.core.security import ACCESS_TOKEN_TYPE, decode_token
+from app.core.sentry_agent import set_sentry_user
 from app.db.session import SessionLocal
 from app.models.enums import UserRole
 from app.models.user import User
@@ -49,6 +50,7 @@ async def _resolve_user_from_credentials(
         raise UnauthorizedError("User not found", code="INVALID_TOKEN")
     if not user.is_active:
         raise ForbiddenError("Account has been deactivated", code="ACCOUNT_INACTIVE")
+    set_sentry_user(user)
     return user
 
 
