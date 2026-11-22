@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     AUTH_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
 
     SENTRY_DSN: str | None = None
+    # Fraction of traces sent to Sentry (0.0 disables new traces, 1.0 captures all).
+    SENTRY_TRACES_SAMPLE_RATE: float = Field(default=0.1, ge=0.0, le=1.0)
+    SENTRY_CAPTURE_LOGS: bool = True
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":

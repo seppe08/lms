@@ -38,8 +38,16 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
 
     if cfg.SENTRY_DSN:
         import sentry_sdk
+        from sentry_sdk.integrations.logging import LoggingIntegration
 
-        sentry_sdk.init(dsn=cfg.SENTRY_DSN, environment=cfg.ENVIRONMENT)
+        sentry_sdk.init(
+            dsn=cfg.SENTRY_DSN,
+            environment=cfg.ENVIRONMENT,
+            traces_sample_rate=cfg.SENTRY_TRACES_SAMPLE_RATE,
+            integrations=(
+                [LoggingIntegration(capture_sentry_logs=True)] if cfg.SENTRY_CAPTURE_LOGS else []
+            ),
+        )
 
     application = FastAPI(
         title=cfg.PROJECT_NAME,
