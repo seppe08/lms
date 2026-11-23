@@ -8,8 +8,12 @@ from app.models.enums import UserRole
 from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.certificate import Certificate
     from app.models.course import Course
     from app.models.enrollment import Enrollment, LessonProgress
+    from app.models.quiz import QuizSubmission
+    from app.models.review import Review
+    from app.models.token import RevokedToken
 
 
 class User(TimestampMixin, Base):
@@ -51,6 +55,26 @@ class User(TimestampMixin, Base):
         passive_deletes=True,
     )
     lesson_progress: Mapped[list["LessonProgress"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    revoked_tokens: Mapped[list["RevokedToken"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    reviews: Mapped[list["Review"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    certificates: Mapped[list["Certificate"]] = relationship(
+        back_populates="user",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    quiz_submissions: Mapped[list["QuizSubmission"]] = relationship(
         back_populates="user",
         cascade="all, delete-orphan",
         passive_deletes=True,

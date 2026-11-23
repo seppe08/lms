@@ -42,6 +42,18 @@ OPENAPI_TAGS = [
         "name": "progress",
         "description": "Lesson completion tracking and course completion %.",
     },
+    {
+        "name": "reviews",
+        "description": "Student ratings and course reviews with verified enrollment.",
+    },
+    {
+        "name": "certificates",
+        "description": "Earned certificates of completion and public verification.",
+    },
+    {
+        "name": "quizzes",
+        "description": "Quizzes, multi-type questions, and auto-graded submissions.",
+    },
 ]
 
 

@@ -8,7 +8,10 @@ from app.models.enums import CourseStatus
 from app.models.mixins import TimestampMixin
 
 if TYPE_CHECKING:
+    from app.models.certificate import Certificate
     from app.models.enrollment import Enrollment, LessonProgress
+    from app.models.quiz import Quiz
+    from app.models.review import Review
     from app.models.user import User
 
 
@@ -50,6 +53,16 @@ class Course(TimestampMixin, Base):
         cascade="all, delete-orphan",
         passive_deletes=True,
     )
+    reviews: Mapped[list["Review"]] = relationship(
+        back_populates="course",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    certificates: Mapped[list["Certificate"]] = relationship(
+        back_populates="course",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
 
 
 class Module(TimestampMixin, Base):
@@ -72,6 +85,12 @@ class Module(TimestampMixin, Base):
     lessons: Mapped[list["Lesson"]] = relationship(
         back_populates="module",
         order_by="Lesson.position",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+    )
+    quizzes: Mapped[list["Quiz"]] = relationship(
+        back_populates="module",
+        order_by="Quiz.position",
         cascade="all, delete-orphan",
         passive_deletes=True,
     )

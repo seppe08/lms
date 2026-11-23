@@ -32,8 +32,11 @@ PostgreSQL   (asyncpg / Alembic)
 
 ```
 User ──< Enrollment >── Course ──< Module ──< Lesson
-  │                                              │
-  └──────────< LessonProgress >──────────────────┘
+  │                        │          │
+  ├──< LessonProgress >────┘          └──< Quiz ──< QuizQuestion ──< QuestionOption
+  ├──< Review >────────────┘                 │
+  ├──< Certificate >───────┘                 └──< QuizSubmission ──< QuizAnswer
+  └──< RevokedToken >
 ```
 
 - **User**: `id`, `email` (unique), `hashed_password` (Argon2), `full_name`, `role` (`student` | `instructor` | `admin`), `is_active`, `created_at`, `updated_at`.
@@ -42,6 +45,14 @@ User ──< Enrollment >── Course ──< Module ──< Lesson
 - **Lesson**: `id`, `module_id`, `title`, `content_type` (`text` | `video` | `link`), `content`, `content_url`, `position`, `duration_minutes`, timestamps.
 - **Enrollment**: `id`, `user_id`, `course_id`, `status` (`active` | `dropped`), `enrolled_at`, timestamps — unique `(user_id, course_id)`.
 - **LessonProgress**: `id`, `user_id`, `lesson_id`, `completed_at` — unique `(user_id, lesson_id)`.
+- **Review**: `id`, `user_id`, `course_id`, `rating` (1-5), `comment`, timestamps — unique `(user_id, course_id)`.
+- **Certificate**: `id`, `certificate_code` (unique), `user_id`, `course_id`, `issued_at` — unique `(user_id, course_id)`.
+- **RevokedToken**: `id`, `jti` (unique), `token_type`, `user_id`, `expires_at`, `created_at`.
+- **Quiz**: `id`, `module_id`, `title`, `description`, `passing_score` (default 70), `max_attempts`, `position`, `is_published`, timestamps.
+- **QuizQuestion**: `id`, `quiz_id`, `question_text`, `question_type` (`multiple_choice` | `multi_select` | `true_false`), `points`, `position`, `explanation`, timestamps.
+- **QuestionOption**: `id`, `question_id`, `option_text`, `is_correct`, `position`.
+- **QuizSubmission**: `id`, `quiz_id`, `user_id`, `score`, `points_scored`, `total_points`, `passed`, `attempt_number`, `submitted_at`.
+- **QuizAnswer**: `id`, `submission_id`, `question_id`, `selected_option_ids`, `is_correct`, `points_awarded`.
 
 ---
 
@@ -86,7 +97,7 @@ User ──< Enrollment >── Course ──< Module ──< Lesson
 │   ├── services/               # Pure business logic & ownership/RBAC enforcement
 │   └── api/
 │       ├── deps.py             # DB session, JWT auth, optional auth, require_roles
-│       └── v1/                 # health, auth, users, courses, enrollments, progress
+│       └── v1/                 # health, auth, users, courses, enrollments, progress, reviews, certificates, quizzes
 ├── alembic/                    # Async Alembic migrations
 ├── docs/
 │   └── API_CONVENTIONS.md      # Error envelope, pagination, auth & RBAC matrix
