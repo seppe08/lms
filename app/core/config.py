@@ -1,7 +1,7 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -33,6 +33,13 @@ class Settings(BaseSettings):
     # Agent Tracing needs prompts/responses to build the conversation transcript.
     SENTRY_AI_CAPTURE_INPUTS: bool = True
     SENTRY_AI_CAPTURE_OUTPUTS: bool = True
+
+    @field_validator("SENTRY_DSN", mode="before")
+    @classmethod
+    def normalize_sentry_dsn(cls, v: str | None) -> str | None:
+        if v is None or (isinstance(v, str) and not v.strip()):
+            return None
+        return v
 
     @model_validator(mode="after")
     def validate_production_settings(self) -> "Settings":
