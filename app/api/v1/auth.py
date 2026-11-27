@@ -48,6 +48,7 @@ async def login(payload: LoginRequest, db: DbSession) -> TokenPair:
 @router.post(
     "/refresh",
     response_model=TokenPair,
+    dependencies=[Depends(enforce_auth_rate_limit)],
     summary="Refresh JWT token pair",
     description="Exchanges a valid refresh token for a fresh access and refresh token pair.",
 )
@@ -58,6 +59,7 @@ async def refresh(payload: RefreshRequest, db: DbSession) -> TokenPair:
 @router.post(
     "/logout",
     status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(enforce_auth_rate_limit)],
     summary="Log out and revoke refresh token",
     description="Revokes the provided refresh token so it cannot be reused.",
 )

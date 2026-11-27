@@ -10,7 +10,7 @@ from app.common.errors import (
     NotFoundError,
     ValidationError,
 )
-from app.common.utils import slugify
+from app.common.utils import escape_like_pattern, slugify
 from app.models.course import Course, Lesson, Module
 from app.models.enrollment import Enrollment
 from app.models.enums import CourseStatus, EnrollmentStatus, LessonContentType, UserRole
@@ -73,8 +73,13 @@ async def list_published_courses(
     if instructor_id is not None:
         filters.append(Course.instructor_id == instructor_id)
     if search:
-        pattern = f"%{search.strip()}%"
-        filters.append(or_(Course.title.ilike(pattern), Course.description.ilike(pattern)))
+        pattern = f"%{escape_like_pattern(search.strip())}%"
+        filters.append(
+            or_(
+                Course.title.ilike(pattern, escape="\\"),
+                Course.description.ilike(pattern, escape="\\"),
+            )
+        )
 
     total = int(await db.scalar(select(func.count(Course.id)).where(*filters)) or 0)
     offset = (page - 1) * per_page
@@ -107,8 +112,13 @@ async def list_manageable_courses(
     if status is not None:
         filters.append(Course.status == status.value)
     if search:
-        pattern = f"%{search.strip()}%"
-        filters.append(or_(Course.title.ilike(pattern), Course.description.ilike(pattern)))
+        pattern = f"%{escape_like_pattern(search.strip())}%"
+        filters.append(
+            or_(
+                Course.title.ilike(pattern, escape="\\"),
+                Course.description.ilike(pattern, escape="\\"),
+            )
+        )
 
     total = int(await db.scalar(select(func.count(Course.id)).where(*filters)) or 0)
     offset = (page - 1) * per_page
@@ -332,7 +342,7 @@ async def reorder_modules(
     modules = list((await db.scalars(stmt)).all())
     existing_map = {m.id: m for m in modules}
 
-    if set(ordered_ids) != set(existing_map.keys()):
+    if len(ordered_ids) != len(existing_map) or set(ordered_ids) != set(existing_map.keys()):
         raise BadRequestError(
             "ordered_ids must include every module ID belonging to this course exactly once",
             code="INVALID_REORDER_IDS",
@@ -507,7 +517,7 @@ async def reorder_lessons(
     lessons = list((await db.scalars(stmt)).all())
     existing_map = {lesson.id: lesson for lesson in lessons}
 
-    if set(ordered_ids) != set(existing_map.keys()):
+    if len(ordered_ids) != len(existing_map) or set(ordered_ids) != set(existing_map.keys()):
         raise BadRequestError(
             "ordered_ids must include every lesson ID belonging to this module exactly once",
             code="INVALID_REORDER_IDS",

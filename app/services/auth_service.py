@@ -1,6 +1,6 @@
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +17,11 @@ from app.models.enums import UserRole
 from app.models.token import RevokedToken
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenPair
+
+
+async def _prune_expired_tokens(db: AsyncSession) -> None:
+    now = datetime.now(UTC).replace(tzinfo=None)
+    await db.execute(delete(RevokedToken).where(RevokedToken.expires_at < now))
 
 
 def _build_token_pair(user: User) -> TokenPair:
@@ -90,6 +95,7 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenPair:
             expires_at=exp_dt.replace(tzinfo=None),
         )
         db.add(revoked)
+        await _prune_expired_tokens(db)
         await db.commit()
 
     return _build_token_pair(user)
@@ -119,4 +125,5 @@ async def logout_user(db: AsyncSession, refresh_token: str) -> None:
         expires_at=exp_dt.replace(tzinfo=None),
     )
     db.add(revoked)
+    await _prune_expired_tokens(db)
     await db.commit()

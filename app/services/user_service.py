@@ -2,6 +2,7 @@ from sqlalchemy import func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.common.errors import BadRequestError, ForbiddenError, NotFoundError
+from app.common.utils import escape_like_pattern
 from app.models.enums import UserRole
 from app.models.user import User
 from app.schemas.user import AdminUserUpdate, UserUpdate
@@ -37,8 +38,13 @@ async def list_users(
     if is_active is not None:
         filters.append(User.is_active.is_(is_active))
     if search:
-        pattern = f"%{search.strip()}%"
-        filters.append(or_(User.email.ilike(pattern), User.full_name.ilike(pattern)))
+        pattern = f"%{escape_like_pattern(search.strip())}%"
+        filters.append(
+            or_(
+                User.email.ilike(pattern, escape="\\"),
+                User.full_name.ilike(pattern, escape="\\"),
+            )
+        )
 
     count_stmt = select(func.count(User.id)).where(*filters)
     total = int(await db.scalar(count_stmt) or 0)

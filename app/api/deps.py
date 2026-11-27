@@ -1,4 +1,4 @@
-from collections.abc import AsyncGenerator, Callable
+from collections.abc import AsyncGenerator, Awaitable, Callable
 from typing import Annotated
 
 from fastapi import Depends
@@ -74,7 +74,7 @@ CurrentUser = Annotated[User, Depends(get_current_user)]
 OptionalCurrentUser = Annotated[User | None, Depends(get_optional_current_user)]
 
 
-def require_roles(*allowed_roles: UserRole) -> Callable[[CurrentUser], User]:
+def require_roles(*allowed_roles: UserRole) -> Callable[[CurrentUser], Awaitable[User]]:
     """Dependency factory enforcing RBAC based on the authenticated user's role."""
     allowed_values = {role.value for role in allowed_roles}
 

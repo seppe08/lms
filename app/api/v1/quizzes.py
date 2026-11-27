@@ -3,6 +3,9 @@ from fastapi import APIRouter, status
 from app.api.deps import CurrentUser, DbSession, InstructorOrAdminUser
 from app.models.enums import UserRole
 from app.schemas.quiz import (
+    QuestionOptionCreate,
+    QuestionOptionRead,
+    QuestionOptionUpdate,
     QuizCreate,
     QuizQuestionCreate,
     QuizQuestionRead,
@@ -16,6 +19,23 @@ from app.schemas.quiz import (
 from app.services import quiz_service
 
 router = APIRouter(tags=["quizzes"])
+
+
+@router.get(
+    "/modules/{module_id}/quizzes",
+    response_model=list[QuizRead | QuizStudentRead],
+    summary="List module quizzes",
+    description="Returns quizzes in a module. Students only see published quizzes.",
+)
+async def list_module_quizzes(
+    module_id: int,
+    db: DbSession,
+    actor: CurrentUser,
+) -> list[QuizRead | QuizStudentRead]:
+    quizzes = await quiz_service.list_module_quizzes(db, module_id=module_id, actor=actor)
+    if actor.role in (UserRole.INSTRUCTOR.value, UserRole.ADMIN.value):
+        return [QuizRead.model_validate(q) for q in quizzes]
+    return [QuizStudentRead.model_validate(q) for q in quizzes]
 
 
 @router.post(
@@ -130,6 +150,63 @@ async def delete_question(
     actor: InstructorOrAdminUser,
 ) -> None:
     await quiz_service.delete_question(db, question_id=question_id, actor=actor)
+
+
+@router.post(
+    "/quizzes/questions/{question_id}/options",
+    response_model=QuestionOptionRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Add option to question (Instructor/Admin)",
+    description="Adds a new answer option to an existing quiz question.",
+)
+async def add_option(
+    question_id: int,
+    payload: QuestionOptionCreate,
+    db: DbSession,
+    actor: InstructorOrAdminUser,
+) -> QuestionOptionRead:
+    option = await quiz_service.add_option(
+        db,
+        question_id=question_id,
+        actor=actor,
+        payload=payload,
+    )
+    return QuestionOptionRead.model_validate(option)
+
+
+@router.patch(
+    "/quizzes/options/{option_id}",
+    response_model=QuestionOptionRead,
+    summary="Update question option (Instructor/Admin)",
+    description="Updates an existing quiz question option.",
+)
+async def update_option(
+    option_id: int,
+    payload: QuestionOptionUpdate,
+    db: DbSession,
+    actor: InstructorOrAdminUser,
+) -> QuestionOptionRead:
+    option = await quiz_service.update_option(
+        db,
+        option_id=option_id,
+        actor=actor,
+        payload=payload,
+    )
+    return QuestionOptionRead.model_validate(option)
+
+
+@router.delete(
+    "/quizzes/options/{option_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete question option (Instructor/Admin)",
+    description="Deletes an option from a quiz question.",
+)
+async def delete_option(
+    option_id: int,
+    db: DbSession,
+    actor: InstructorOrAdminUser,
+) -> None:
+    await quiz_service.delete_option(db, option_id=option_id, actor=actor)
 
 
 @router.get(

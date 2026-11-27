@@ -7,6 +7,7 @@ from app.common.errors import UnauthorizedError
 from app.common.rate_limit import SlidingWindowRateLimiter
 from app.common.utils import (
     calculate_completion_percentage,
+    escape_like_pattern,
     slugify,
     validate_password_strength,
 )
@@ -63,6 +64,18 @@ def test_expired_jwt_token_rejected() -> None:
 )
 def test_slugify(raw: str, expected: str) -> None:
     assert slugify(raw) == expected
+
+
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("100% python_3", r"100\% python\_3"),
+        (r"a\b%c_d", r"a\\b\%c\_d"),
+        ("normal", "normal"),
+    ],
+)
+def test_escape_like_pattern(raw: str, expected: str) -> None:
+    assert escape_like_pattern(raw) == expected
 
 
 @pytest.mark.parametrize(

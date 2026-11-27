@@ -1,7 +1,7 @@
 import asyncio
 import math
 import time
-from collections import defaultdict, deque
+from collections import deque
 
 from fastapi import Request
 
@@ -15,19 +15,26 @@ class SlidingWindowRateLimiter:
     def __init__(self, max_requests: int, window_seconds: int) -> None:
         self.max_requests = max_requests
         self.window_seconds = window_seconds
-        self._buckets: dict[str, deque[float]] = defaultdict(deque)
+        self._buckets: dict[str, deque[float]] = {}
         self._lock = asyncio.Lock()
 
     async def check(self, key: str) -> tuple[bool, int]:
         now = time.monotonic()
         cutoff = now - self.window_seconds
         async with self._lock:
-            bucket = self._buckets[key]
-            while bucket and bucket[0] <= cutoff:
-                bucket.popleft()
-            if len(bucket) >= self.max_requests:
+            bucket = self._buckets.get(key)
+            if bucket is not None:
+                while bucket and bucket[0] <= cutoff:
+                    bucket.popleft()
+                if not bucket:
+                    del self._buckets[key]
+                    bucket = None
+            if bucket is not None and len(bucket) >= self.max_requests:
                 retry_after = max(1, math.ceil(bucket[0] + self.window_seconds - now))
                 return False, retry_after
+            if bucket is None:
+                bucket = deque()
+                self._buckets[key] = bucket
             bucket.append(now)
             return True, 0
 
@@ -44,7 +51,7 @@ auth_rate_limiter = SlidingWindowRateLimiter(
 async def enforce_auth_rate_limit(request: Request) -> None:
     if not settings.RATE_LIMIT_ENABLED:
         return
-    forwarded = request.headers.get("X-Forwarded-For")
+    forwarded = request.headers.get("X-Forwarded-For") if settings.TRUST_PROXY_HEADERS else None
     client_ip = (
         forwarded.split(",")[0].strip()
         if forwarded

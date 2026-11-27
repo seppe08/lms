@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[str] = Field(default_factory=lambda: ["http://localhost:3000"])
 
     RATE_LIMIT_ENABLED: bool = True
+    TRUST_PROXY_HEADERS: bool = False
     AUTH_RATE_LIMIT_REQUESTS: int = Field(default=10, ge=1)
     AUTH_RATE_LIMIT_WINDOW_SECONDS: int = Field(default=60, ge=1)
 

@@ -12,6 +12,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    UniqueConstraint,
     func,
     true,
 )
@@ -130,6 +131,14 @@ class QuestionOption(Base):
 
 class QuizSubmission(Base):
     __tablename__ = "quiz_submissions"
+    __table_args__ = (
+        UniqueConstraint(
+            "quiz_id",
+            "user_id",
+            "attempt_number",
+            name="uq_quiz_submissions_attempt",
+        ),
+    )
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     quiz_id: Mapped[int] = mapped_column(

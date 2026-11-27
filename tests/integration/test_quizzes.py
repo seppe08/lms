@@ -211,3 +211,110 @@ async def test_quiz_lifecycle_and_grading(
     assert (
         await client.get(f"/api/v1/quizzes/{quiz_id}", headers=instructor_headers)
     ).status_code == 404
+
+
+async def test_quiz_publishing_and_validation_guards(
+    client: AsyncClient,
+    db_session: AsyncSession,
+    student_headers: dict[str, str],
+    instructor_user: User,
+    instructor_headers: dict[str, str],
+) -> None:
+    course = await create_course_record(
+        db_session,
+        instructor=instructor_user,
+        title="Quiz Validation Course",
+        status=CourseStatus.PUBLISHED,
+    )
+    module = await create_module_record(db_session, course=course, title="Module 1")
+    await client.post(f"/api/v1/courses/{course.id}/enroll", headers=student_headers)
+
+    # Create unpublished quiz
+    draft_quiz = (
+        await client.post(
+            f"/api/v1/modules/{module.id}/quizzes",
+            headers=instructor_headers,
+            json={"title": "Draft Quiz", "is_published": False},
+        )
+    ).json()
+    draft_id = draft_quiz["id"]
+
+    # Student cannot view or submit unpublished quiz; list omits it
+    assert (
+        await client.get(f"/api/v1/quizzes/{draft_id}", headers=student_headers)
+    ).status_code == 404
+    assert (
+        await client.post(
+            f"/api/v1/quizzes/{draft_id}/submit",
+            headers=student_headers,
+            json={"answers": []},
+        )
+    ).status_code == 404
+    student_list = await client.get(f"/api/v1/modules/{module.id}/quizzes", headers=student_headers)
+    assert student_list.status_code == 200
+    assert student_list.json() == []
+
+    # Instructor sees it in module list
+    inst_list = await client.get(f"/api/v1/modules/{module.id}/quizzes", headers=instructor_headers)
+    assert len(inst_list.json()) == 1
+
+    # Question creation requires >= 2 options and exactly 1 correct for multiple_choice
+    bad_q = await client.post(
+        f"/api/v1/quizzes/{draft_id}/questions",
+        headers=instructor_headers,
+        json={
+            "question_text": "Invalid?",
+            "question_type": "multiple_choice",
+            "options": [{"option_text": "Only one", "is_correct": True, "position": 1}],
+        },
+    )
+    assert bad_q.status_code == 422
+
+    # Publish quiz and add valid question + option CRUD
+    await client.patch(
+        f"/api/v1/quizzes/{draft_id}",
+        headers=instructor_headers,
+        json={"is_published": True},
+    )
+    q = (
+        await client.post(
+            f"/api/v1/quizzes/{draft_id}/questions",
+            headers=instructor_headers,
+            json={
+                "question_text": "Valid?",
+                "question_type": "multiple_choice",
+                "options": [
+                    {"option_text": "Yes", "is_correct": True, "position": 1},
+                    {"option_text": "No", "is_correct": False, "position": 2},
+                ],
+            },
+        )
+    ).json()
+
+    # Add a third option, update it, then delete it
+    opt3 = (
+        await client.post(
+            f"/api/v1/quizzes/questions/{q['id']}/options",
+            headers=instructor_headers,
+            json={"option_text": "Maybe", "is_correct": False, "position": 3},
+        )
+    ).json()
+    patched_opt = await client.patch(
+        f"/api/v1/quizzes/options/{opt3['id']}",
+        headers=instructor_headers,
+        json={"option_text": "Definitely Not"},
+    )
+    assert patched_opt.status_code == 200
+    assert patched_opt.json()["option_text"] == "Definitely Not"
+    assert (
+        await client.delete(f"/api/v1/quizzes/options/{opt3['id']}", headers=instructor_headers)
+    ).status_code == 204
+
+    # Submitting foreign option ID fails with 400 INVALID_OPTION_ID
+    bad_sub = await client.post(
+        f"/api/v1/quizzes/{draft_id}/submit",
+        headers=student_headers,
+        json={"answers": [{"question_id": q["id"], "selected_option_ids": [999999]}]},
+    )
+    assert bad_sub.status_code == 400
+    assert bad_sub.json()["error"]["code"] == "INVALID_OPTION_ID"

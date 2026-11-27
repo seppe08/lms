@@ -16,7 +16,6 @@ class CertificateRead(BaseModel):
 class CertificateVerifyRead(BaseModel):
     certificate_code: str
     student_name: str
-    student_email: str
     course_title: str
     course_slug: str
     instructor_name: str | None

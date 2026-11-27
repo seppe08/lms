@@ -128,9 +128,11 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
     async def health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @application.get("/sentry-debug", tags=["sentry"], summary="Sentry health check")
-    async def trigger_error():
-        division_by_zero = 1 / 0  # noqa: F841
+    if cfg.DEBUG or cfg.ENVIRONMENT in ("local", "development"):
+
+        @application.get("/sentry-debug", tags=["health"], summary="Sentry health check")
+        async def trigger_error():
+            division_by_zero = 1 / 0  # noqa: F841
 
     return application
 

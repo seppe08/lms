@@ -12,6 +12,7 @@ from app.core.sentry_agent import (
     CONVERSATION_ID_HEADER,
     bind_conversation_id,
     clear_conversation_id,
+    clear_sentry_user,
 )
 
 logger = logging.getLogger("app.access")
@@ -57,6 +58,7 @@ class SentryAgentMiddleware(BaseHTTPMiddleware):
         finally:
             if conversation_id:
                 clear_conversation_id()
+            clear_sentry_user()
 
 
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):

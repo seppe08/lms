@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 # --- Options ---
@@ -42,6 +42,17 @@ class QuizQuestionCreate(BaseModel):
     position: int = Field(default=1, ge=1)
     explanation: str | None = None
     options: list[QuestionOptionCreate] = Field(default_factory=list)
+
+    @model_validator(mode="after")
+    def validate_options_for_type(self) -> "QuizQuestionCreate":
+        if len(self.options) < 2:
+            raise ValueError("Questions must have at least 2 options")
+        correct_count = sum(1 for opt in self.options if opt.is_correct)
+        if correct_count == 0:
+            raise ValueError("Questions must have at least one correct option")
+        if self.question_type in ("multiple_choice", "true_false") and correct_count != 1:
+            raise ValueError(f"{self.question_type} questions must have exactly one correct option")
+        return self
 
 
 class QuizQuestionUpdate(BaseModel):

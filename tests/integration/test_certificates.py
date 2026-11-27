@@ -76,7 +76,7 @@ async def test_certificate_issuance_and_verification(
     verify_data = verify_resp.json()
     assert verify_data["certificate_code"] == code
     assert verify_data["course_title"] == course.title
-    assert verify_data["student_email"] == student_user.email
+    assert "student_email" not in verify_data
     assert verify_data["is_valid"] is True
 
     # Invalid code returns 404

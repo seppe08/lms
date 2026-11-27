@@ -1,6 +1,7 @@
 from uuid import uuid4
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import joinedload
 
@@ -67,8 +68,20 @@ async def generate_certificate(
         course_id=course_id,
     )
     db.add(certificate)
-    await db.commit()
-    await db.refresh(certificate)
+    try:
+        await db.commit()
+        await db.refresh(certificate)
+    except IntegrityError:
+        await db.rollback()
+        existing_after_race = await db.scalar(
+            select(Certificate).where(
+                Certificate.course_id == course_id,
+                Certificate.user_id == actor.id,
+            )
+        )
+        if existing_after_race:
+            return existing_after_race
+        raise
     return certificate
 
 
@@ -111,7 +124,6 @@ async def verify_certificate(
     return CertificateVerifyRead(
         certificate_code=cert.certificate_code,
         student_name=student_name,
-        student_email=cert.user.email,
         course_title=cert.course.title,
         course_slug=cert.course.slug,
         instructor_name=instructor_name,

@@ -37,6 +37,9 @@ jobs:
       - name: Check Ruff formatting
         run: uv run ruff format --check .
 
+      - name: Run mypy type check
+        run: uv run mypy app
+
   test:
     name: Database Migrations & Test Suite
     runs-on: ubuntu-latest
@@ -83,15 +86,16 @@ jobs:
       - name: Install dependencies
         run: uv sync --frozen --python 3.12
 
-      - name: Verify Alembic migrations lifecycle (upgrade -> downgrade -> upgrade)
+      - name: Verify Alembic migrations lifecycle (upgrade -> downgrade -> upgrade -> check)
         run: |
           uv run alembic upgrade head
           uv run alembic downgrade base
           uv run alembic upgrade head
+          uv run alembic check
 
       - name: Run pytest with test coverage gate
         run: |
-          uv run pytest --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=80
+          uv run pytest --cov=app --cov-report=term-missing --cov-report=xml:coverage.xml --cov-fail-under=85
 
       - name: Upload coverage report artifact
         uses: actions/upload-artifact@v4
@@ -130,3 +134,19 @@ jobs:
             -e JWT_SECRET_KEY="ci-container-jwt-secret-key-min-32-chars" \
             lms-api:ci-test python -c "import app.main; print('App module imported successfully')"
           docker run --rm lms-api:ci-test alembic --help > /dev/null
+          CONTAINER_ID=$(docker run -d --rm -p 18000:8000 \
+            -e ENVIRONMENT="production" \
+            -e DATABASE_URL="postgresql+asyncpg://postgres:postgres@localhost:5432/lms" \
+            -e SECRET_KEY="ci-container-secret-key-minimum-32-chars" \
+            -e JWT_SECRET_KEY="ci-container-jwt-secret-key-min-32-chars" \
+            lms-api:ci-test)
+          trap "docker stop $CONTAINER_ID >/dev/null 2>&1 || true" EXIT
+          for i in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:18000/health >/dev/null 2>&1; then
+              break
+            fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:18000/health | grep -q '"status":"ok"'
+          STATUS_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:18000/sentry-debug)
+          test "$STATUS_CODE" = "404"

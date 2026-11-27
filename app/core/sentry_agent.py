@@ -50,3 +50,8 @@ def clear_conversation_id() -> None:
 def set_sentry_user(user: "User") -> None:
     """Attribute the current Sentry scope (and its conversation) to a user."""
     sentry_sdk.set_user({"id": str(user.id), "email": user.email})
+
+
+def clear_sentry_user() -> None:
+    """Clear the authenticated user from the current Sentry scope."""
+    sentry_sdk.set_user(None)

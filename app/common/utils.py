@@ -17,6 +17,11 @@ def calculate_completion_percentage(completed_lessons: int, total_lessons: int) 
     return round((bounded_completed / total_lessons) * 100.0, 2)
 
 
+def escape_like_pattern(value: str) -> str:
+    """Escape SQL LIKE/ILIKE wildcard characters (\\, %, _)."""
+    return value.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+
+
 def validate_password_strength(password: str) -> str:
     """Validate password complexity: 8-128 chars, upper, lower, and digit."""
     if len(password) < 8:
