@@ -1,12 +1,13 @@
 import os
 
 # Configure test environment before importing app modules so Settings initializes cleanly.
-os.environ.setdefault("ENVIRONMENT", "testing")
-os.environ.setdefault("DATABASE_URL", "sqlite+aiosqlite:///:memory:")
-os.environ.setdefault("SECRET_KEY", "test-secret-key-for-lms-api-minimum-32-chars")
-os.environ.setdefault("JWT_SECRET_KEY", "test-jwt-secret-key-for-lms-api-minimum-32-chars")
-os.environ.setdefault("RATE_LIMIT_ENABLED", "false")
-os.environ.setdefault("CORS_ORIGINS", '["http://localhost:3000"]')
+os.environ["ENVIRONMENT"] = "testing"
+os.environ["DATABASE_URL"] = "sqlite+aiosqlite:///:memory:"
+os.environ["SECRET_KEY"] = "test-secret-key-for-lms-api-minimum-32-chars"
+os.environ["JWT_SECRET_KEY"] = "test-jwt-secret-key-for-lms-api-minimum-32-chars"
+os.environ["RATE_LIMIT_ENABLED"] = "false"
+os.environ["CORS_ORIGINS"] = '["http://localhost:3000"]'
+os.environ["SENTRY_DSN"] = ""
 
 from collections.abc import AsyncGenerator
 

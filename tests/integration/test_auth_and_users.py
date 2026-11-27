@@ -94,6 +94,30 @@ async def test_login_refresh_and_me_flow(client: AsyncClient, student_user: User
     assert refreshed.status_code == 200
     assert refreshed.json()["access_token"]
 
+    # Reusing the rotated refresh token fails (Token Rotation)
+    reused = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": tokens["refresh_token"]},
+    )
+    assert reused.status_code == 401
+    assert reused.json()["error"]["code"] == "TOKEN_REVOKED"
+
+    # Logout revokes the new refresh token
+    new_refresh = refreshed.json()["refresh_token"]
+    logout_resp = await client.post(
+        "/api/v1/auth/logout",
+        json={"refresh_token": new_refresh},
+    )
+    assert logout_resp.status_code == 204
+
+    # Using the logged-out refresh token fails
+    after_logout = await client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": new_refresh},
+    )
+    assert after_logout.status_code == 401
+    assert after_logout.json()["error"]["code"] == "TOKEN_REVOKED"
+
     # Expired token fails
     expired = create_access_token(
         student_user.id, student_user.role, expires_delta=timedelta(seconds=-5)

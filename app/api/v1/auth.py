@@ -5,6 +5,7 @@ from app.common.rate_limit import enforce_auth_rate_limit
 from app.schemas.auth import (
     AuthResponse,
     LoginRequest,
+    LogoutRequest,
     RefreshRequest,
     RegisterRequest,
     TokenPair,
@@ -52,3 +53,13 @@ async def login(payload: LoginRequest, db: DbSession) -> TokenPair:
 )
 async def refresh(payload: RefreshRequest, db: DbSession) -> TokenPair:
     return await auth_service.refresh_tokens(db, payload.refresh_token)
+
+
+@router.post(
+    "/logout",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Log out and revoke refresh token",
+    description="Revokes the provided refresh token so it cannot be reused.",
+)
+async def logout(payload: LogoutRequest, db: DbSession) -> None:
+    await auth_service.logout_user(db, payload.refresh_token)
